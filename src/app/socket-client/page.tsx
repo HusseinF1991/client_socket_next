@@ -7,34 +7,6 @@ import { AVAILABLE_EVENTS, EVENTS_TO_LISTEN } from "../socket-events";
 // Provide a fallback URL if environment variable is not set
 const SOCKET_SERVER_URL = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || "http://localhost:4000";
 
-// Define events to listen for
-// const EVENTS_TO_LISTEN = [
-//     //clinic system
-//     "RECEIVE_START_DIAGNOSIS",
-//     "RECEIVE_DIAGNOSIS_COMPLETED",
-//     // "RECEIVE_PRESCRIPTION",
-//     // "RECEIVE_LAB_RESULTS",
-//     // //alpha
-//     // "RECEIVE_NEW_CONVO_MSG",
-//     // "RECEIVE_EDIT_CONVO_MSG",
-//     // "RECEIVE_DEL_CONVO_MSG",
-//     // "RECEIVE_MSG_REACTION",
-//     // "RECEIVE_LEFT_CONVERSATION",
-//     // "RECEIVE_CHANGE_PS_SHARING_STATE",
-//     // "RECEIVE_CHANGE_PS_MUTE_STATE",
-//     // "RECEIVE_PARTICIPANT_IS_OFFLINE",
-//     // "RECEIVE_PARTICIPANT_IS_ONLINE",
-//     // "RECEIVE_CONVO_MSG_READ",
-//     // "GROUP_CONVO_INFO_UPDATED",
-//     // //ai workouts routine
-//     // "GENERATE_AI_WORKOUT_ROUTINE",
-//     // "AI_WORKOUT_STATUS",
-//     // "AI_WORKOUT_DATA",
-//     // "AI_WORKOUT_DAY",
-//     // "AI_WORKOUT_COMPLETE",
-//     // "AI_WORKOUT_ERROR",
-// ];
-
 export default function SocketClient() {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [messages, setMessages] = useState<string[]>([]);
@@ -95,10 +67,10 @@ export default function SocketClient() {
 
 
         //Obsolete : the user should login to connect to socket on cookies-based auth
-        // Configure token based on selected method
-        // if (useTokenInCookies) {
-        //     setCookie();
-        // }
+/*         // Configure token based on selected method
+        if (useTokenInCookies) {
+            setCookie();
+        } */
 
         // Socket connection options
         const socketOptions: {
@@ -217,11 +189,11 @@ export default function SocketClient() {
     }, []);
 
     //Obsolete : the user should login to connect to socket on cookies-based auth
-    // Update cookie status periodically
-    // useEffect(() => {
-    //     const cookieCheckInterval = setInterval(checkCookieStatus, 2000);
-    //     return () => clearInterval(cookieCheckInterval);
-    // }, []);
+/*     // Update cookie status periodically
+    useEffect(() => {
+        const cookieCheckInterval = setInterval(checkCookieStatus, 2000);
+        return () => clearInterval(cookieCheckInterval);
+    }, []); */
 
     // Function to handle sending events
     const sendEvent = () => {
