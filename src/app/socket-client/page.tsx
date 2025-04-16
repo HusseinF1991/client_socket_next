@@ -2,20 +2,104 @@
 
 import { useEffect, useState } from "react";
 import io, { Socket } from "socket.io-client";
-import Cookies from "js-cookie";
+// import Cookies from "js-cookie";
 
 // Provide a fallback URL if environment variable is not set
-const SOCKET_SERVER_URL = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || "http://localhost:4000";
-const access_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjAxOTRjNzJkLWE1YWYtN2IzYy05NWE5LWY0MDgxZjNkYjY0ZiIsImlhdCI6MTc0NDY1NTU4MywiZXhwIjoxNzQ0NjU2NDgzfQ.mZ473QCICoL1xj7WafJCTTxfHhHCRc8YEYaddwrK0rs";
+const SOCKET_SERVER_URL = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || "http://127.0.0.1:3001";
+const DEFAULT_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjlkOTFhYzdiLWE4MmUtNDI1My04MmNkLTZjM2Y1MjY0ZWY4YiIsImFjY291bnRUeXBlIjoiR1lNX09XTkVSIiwiaWF0IjoxNzQzOTM0Njk3LCJleHAiOjE3NTY4OTQ2OTd9.4FUIM_yJR_4-N1cE81cJuUD_j0vg6CT5ki3DfqocXlI";
+
+// Define available events to emit
+const AVAILABLE_EVENTS = [
+    //clinic system
+    { id: "SEND_START_DIAGNOSIS", name: "Start Diagnosis", defaultPayload: { patientId: "" } },
+    { id: "SEND_DIAGNOSIS_COMPLETED", name: "Diagnosis Completed", defaultPayload: { patientId: "" } },
+    // { id: "SEND_PRESCRIPTION", name: "Send Prescription", defaultPayload: { patientId: "", medication: "" } },
+    // { id: "SEND_LAB_RESULTS", name: "Send Lab Results", defaultPayload: { patientId: "", results: [] } },
+    //alpha
+    // { id: "SEND_EDIT_CONVO_MSG", name: "Edit Conversation Message", defaultPayload: { messageId: "", newContent: "" } },
+    // { id: "SEND_DEL_CONVO_MSG", name: "Delete Conversation Message", defaultPayload: { messageId: "" } },
+    // { id: "SEND_MSG_REACTION", name: "Message Reaction", defaultPayload: { messageId: "", reaction: "" } },
+    // { id: "SEND_LEAVE_CONVERSATION", name: "Leave Conversation", defaultPayload: { conversationId: "" } },
+    // { id: "SEND_CHANGE_PS_SHARING_STATE", name: "Change PS Sharing State", defaultPayload: { state: "" } },
+    // { id: "SEND_CHANGE_PS_MUTE_STATE", name: "Change PS Mute State", defaultPayload: { state: "" } },
+    // { id: "SEND_GO_OFFLINE", name: "Go Offline", defaultPayload: {} },
+    // { id: "SEND_CONVO_MSG_READ", name: "Conversation Message Read", defaultPayload: { messageId: "" } },
+];
+
+// Define events to listen for
+const EVENTS_TO_LISTEN = [
+    //clinic system
+    "RECEIVE_START_DIAGNOSIS",
+    "RECEIVE_DIAGNOSIS_COMPLETED",
+    // "RECEIVE_PRESCRIPTION",
+    // "RECEIVE_LAB_RESULTS",
+    // //alpha
+    // "RECEIVE_NEW_CONVO_MSG",
+    // "RECEIVE_EDIT_CONVO_MSG",
+    // "RECEIVE_DEL_CONVO_MSG",
+    // "RECEIVE_MSG_REACTION",
+    // "RECEIVE_LEFT_CONVERSATION",
+    // "RECEIVE_CHANGE_PS_SHARING_STATE",
+    // "RECEIVE_CHANGE_PS_MUTE_STATE",
+    // "RECEIVE_PARTICIPANT_IS_OFFLINE",
+    // "RECEIVE_PARTICIPANT_IS_ONLINE",
+    // "RECEIVE_CONVO_MSG_READ",
+    // "GROUP_CONVO_INFO_UPDATED",
+    // //ai workouts routine
+    // "GENERATE_AI_WORKOUT_ROUTINE",
+    // "AI_WORKOUT_STATUS",
+    // "AI_WORKOUT_DATA",
+    // "AI_WORKOUT_DAY",
+    // "AI_WORKOUT_COMPLETE",
+    // "AI_WORKOUT_ERROR",
+];
 
 export default function SocketClient() {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [messages, setMessages] = useState<string[]>([]);
-    const [inputPatientId, setInputPatientId] = useState<string>("");
     const [connectionStatus, setConnectionStatus] = useState<string>("Disconnected");
     const [errorMessage, setErrorMessage] = useState<string>("");
     const [retryCount, setRetryCount] = useState<number>(0);
     const [serverUrl, setServerUrl] = useState<string>(SOCKET_SERVER_URL);
+
+    //Obsolete : the user should login to connect to socket on cookies-based auth
+    // const [cookieStatus, setCookieStatus] = useState<string>("");
+
+    // New state for enhancements
+    const [token, setToken] = useState<string>(DEFAULT_TOKEN);
+    const [useTokenInCookies, setUseTokenInCookies] = useState<boolean>(true);
+    const [selectedEvent, setSelectedEvent] = useState<string>(AVAILABLE_EVENTS[0].id);
+    const [eventPayload, setEventPayload] = useState<string>(JSON.stringify(AVAILABLE_EVENTS[0].defaultPayload, null, 2));
+    const [listeningEvents, setListeningEvents] = useState<string[]>(EVENTS_TO_LISTEN);
+    const [socketPath, setSocketPath] = useState<string>("/mobile-backend/dev/socket");
+
+    //Obsolete : the user should login to connect to socket on cookies-based auth
+    /*     // Function to check if a cookie exists
+        const checkCookieStatus = () => {
+            const cookies = document.cookie;
+            console.log("cookies", cookies);
+            
+            setCookieStatus(cookies);
+            return cookies.includes("access_token");
+        };
+    
+        // Set cookie function
+        const setCookie = () => {
+            // Store JWT token in a cookie with proper settings
+            Cookies.set("access_token", token, {
+                path: "/",
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                expires: 1,
+            });
+    
+            // Also try setting the cookie manually for older browsers
+            document.cookie = `access_token=${token}; path=/; ${process.env.NODE_ENV === "production" ? 'secure;' : ''} samesite=lax; max-age=86400`;
+            
+            // Update cookie status
+            checkCookieStatus();
+            console.log("Cookie set:", document.cookie);
+        }; */
 
     // Function to establish socket connection
     const connectToSocket = () => {
@@ -28,16 +112,46 @@ export default function SocketClient() {
         setErrorMessage("");
         setConnectionStatus("Connecting...");
 
-        // Connect to WebSocket server with improved options
-        const socketInstance = io(serverUrl, {
-            path: '/socket',
-            withCredentials: true,
+
+        //Obsolete : the user should login to connect to socket on cookies-based auth
+        // Configure token based on selected method
+        // if (useTokenInCookies) {
+        //     setCookie();
+        // }
+
+        // Socket connection options
+        const socketOptions: {
+            withCredentials: boolean;
+            query: { lang: string };
+            transports: string[];
+            timeout: number;
+            reconnectionAttempts: number;
+            reconnectionDelay: number;
+            path?: string;
+            auth?: { token: string };
+        } = {
+            withCredentials: useTokenInCookies, // Only use credentials if token is in cookies
             query: { lang: 'ar' },
-            transports: ["websocket", "polling"], // fallback to polling if websocket fails
-            timeout: 10000, // 10 seconds timeout
+            transports: ["websocket", "polling"],
+            timeout: 10000,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
-        });
+        };
+
+        // Add path only if it's not empty
+        if (socketPath.trim() !== '') {
+            socketOptions.path = socketPath;
+        }
+
+        // Add auth option if not using cookies
+        if (!useTokenInCookies) {
+            socketOptions.auth = {
+                token: token
+            }
+        }
+
+        // Connect to WebSocket server        console.log("socketOptions", socketOptions);
+        const socketInstance = io(serverUrl, socketOptions);
 
         setSocket(socketInstance);
 
@@ -55,20 +169,26 @@ export default function SocketClient() {
             });
         });
 
-        socketInstance.on("RECEIVE_START_DIAGNOSIS", (message) => {
-            console.log("Received start diagnosis message:", message);
-            setMessages((prev) => [...prev, JSON.stringify(message)]);
-        });
-
-        socketInstance.on("RECEIVE_DIAGNOSIS_COMPLETED", (message) => {
-            console.log("Received diagnosis completed message:", message);
-            setMessages((prev) => [...prev, JSON.stringify(message)]);
+        // Dynamically add event listeners based on listeningEvents array
+        listeningEvents.forEach(eventName => {
+            socketInstance.on(eventName, (message) => {
+                console.log(`Received ${eventName} message:`, message);
+                const formattedMessage = `${eventName}: ${JSON.stringify(message)}`;
+                setMessages((prev) => [...prev, formattedMessage]);
+            });
         });
 
         socketInstance.on("connect_error", (err) => {
-            console.error("Connection error:", err.message);
+            console.error("Connection error:", err);
+            console.error("Error message:", err.message);
+
+            // Access potential extra data (Socket.IO errors might have additional properties)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const errorData = (err as any).data;
+            if (errorData) console.error("Error data:", errorData);
+
             setConnectionStatus("Error");
-            setErrorMessage(`Connection error: ${err.message}`);
+            setErrorMessage(`Connection error: ${err.message}${errorData ? ` (${JSON.stringify(errorData)})` : ''}`);
         });
 
         socketInstance.on('error', (err) => {
@@ -102,12 +222,9 @@ export default function SocketClient() {
 
     // Initial connection on component mount
     useEffect(() => {
-        // Store JWT token in a cookie
-        Cookies.set("access_token", access_token, {
-            path: "/",
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-        });
+        //Obsolete : the user should login to connect to socket on cookies-based auth
+        // Check for existing cookies
+        // checkCookieStatus();
 
         connectToSocket();
 
@@ -118,98 +235,252 @@ export default function SocketClient() {
         };
     }, []);
 
-    const sendDiagnosisCompleted = () => {
-        if (socket) {
-            socket.emit("SEND_DIAGNOSIS_COMPLETED", { patientId: inputPatientId }, (response: Record<string, boolean>) => {
+    //Obsolete : the user should login to connect to socket on cookies-based auth
+    // Update cookie status periodically
+    // useEffect(() => {
+    //     const cookieCheckInterval = setInterval(checkCookieStatus, 2000);
+    //     return () => clearInterval(cookieCheckInterval);
+    // }, []);
+
+    // Function to handle sending events
+    const sendEvent = () => {
+        if (!socket) return;
+
+        try {
+            const payload = JSON.parse(eventPayload);
+
+            socket.emit(selectedEvent, payload, (response: Record<string, unknown>) => {
                 if (response.success === true) {
-                    console.log('diagnosis completed state notification is sent successfully:', response);
+                    console.log(`${selectedEvent} sent successfully:`, response);
+                    setMessages(prev => [...prev, `SENT ${selectedEvent}: ${JSON.stringify(payload)}`]);
                 } else if (response.success === false) {
                     console.error('Error from server:', response.message);
+                    setErrorMessage(`Error from server: ${String(response.message)}`);
                 }
             });
+        } catch (error) {
+            console.error('Invalid JSON payload:', error);
+            setErrorMessage('Invalid JSON payload. Please check your input.');
         }
     };
 
-    const sendStartDiagnosis = () => {
-        if (socket) {
-            socket.emit("SEND_START_DIAGNOSIS", { patientId: inputPatientId }, (response: Record<string, boolean>) => {
-                if (response.success === true) {
-                    console.log('diagnosis started state notification is sent successfully:', response);
-                } else if (response.success === false) {
-                    console.error('Error from server:', response.message);
-                }
-            });
+    // Set default payload when event selection changes
+    const handleEventChange = (eventId: string) => {
+        setSelectedEvent(eventId);
+        const selectedEventObj = AVAILABLE_EVENTS.find(e => e.id === eventId);
+        if (selectedEventObj) {
+            setEventPayload(JSON.stringify(selectedEventObj.defaultPayload, null, 2));
         }
     };
+
+    // Toggle event listening
+    const toggleEventListener = (eventName: string) => {
+        if (listeningEvents.includes(eventName)) {
+            setListeningEvents(prev => prev.filter(e => e !== eventName));
+        } else {
+            setListeningEvents(prev => [...prev, eventName]);
+        }
+    };
+
+    // Effect to update event listeners when listeningEvents changes
+    useEffect(() => {
+        if (socket) {
+            // Reinstantiate connection with new listeners
+            connectToSocket();
+        }
+    }, [listeningEvents]);
 
     return (
-        <div className="p-6">
-            <h1 className="text-xl font-bold mb-4">Socket.IO Client</h1>
-            
-            <div className="mb-4 bg-gray-100 p-3 rounded">
-                <p className="font-semibold">Connection Info:</p>
-                <div className="flex items-center my-2">
-                    <input
-                        type="text"
-                        value={serverUrl}
-                        onChange={(e) => setServerUrl(e.target.value)}
-                        placeholder="Socket server URL"
-                        className="border border-gray-300 p-2 flex-1 rounded-l"
+        <div className="p-6 max-w-4xl mx-auto">
+            <h1 className="text-2xl font-bold mb-6">Socket.IO Client</h1>
+
+            {/* Connection Panel */}
+            <div className="mb-6 bg-gray-100 p-4 rounded shadow-sm">
+                <h2 className="text-lg font-semibold mb-3">Connection Settings</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Server URL</label>
+                        <div className="flex">
+                            <input
+                                type="text"
+                                value={serverUrl}
+                                onChange={(e) => setServerUrl(e.target.value)}
+                                placeholder="Socket server URL"
+                                className="border border-gray-300 p-2 flex-1 rounded"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Socket Path (optional)</label>
+                        <input
+                            type="text"
+                            value={socketPath}
+                            onChange={(e) => setSocketPath(e.target.value)}
+                            placeholder="Leave empty to use default"
+                            className="border border-gray-300 p-2 w-full rounded"
+                        />
+                    </div>
+                </div>
+
+                <div className="mb-4">
+                    <label className="block text-sm font-medium mb-1">Authentication Token</label>
+                    <textarea
+                        value={token}
+                        onChange={(e) => setToken(e.target.value)}
+                        placeholder="JWT Token"
+                        className="border border-gray-300 p-2 w-full rounded font-mono text-sm"
+                        rows={3}
+                        disabled={useTokenInCookies}
                     />
+                    <div className="mt-2 flex items-center">
+                        <input
+                            type="checkbox"
+                            id="useTokenInCookies"
+                            checked={useTokenInCookies}
+                            onChange={() => setUseTokenInCookies(!useTokenInCookies)}
+                            className="mr-2"
+                        />
+                        <label htmlFor="useTokenInCookies" className="text-sm">
+                            Use token in cookies (otherwise send in auth request)
+                        </label>
+                    </div>
+
+                    {/* //Obsolete : the user should login to connect to socket on cookies-based auth */}
+                    {/* {useTokenInCookies && (
+                        <button
+                            className="mt-2 px-4 py-1 bg-gray-200 text-gray-700 rounded text-sm"
+                            onClick={() => {
+                                setCookie();
+                                // Force rerender to show cookie status
+                                setErrorMessage("Cookie set: " + token.substring(0, 15) + "...");
+                                setTimeout(() => setErrorMessage(""), 2000);
+                            }}
+                        >
+                            Force Set Cookie
+                        </button>
+                    )} */}
+                </div>
+
+                <div className="mb-2">
                     <button
-                        className="px-4 py-2 bg-blue-500 text-white rounded-r"
+                        className="px-4 py-2 bg-blue-500 text-white rounded w-full"
                         onClick={connectToSocket}
                     >
-                        Reconnect
+                        Connect
                     </button>
                 </div>
-                <p>Status: <span 
-                    className={
-                        connectionStatus === "Connected" ? "text-green-600 font-bold" : 
-                        connectionStatus === "Reconnecting" ? "text-yellow-600 font-bold" : 
-                        "text-red-600 font-bold"
-                    }
-                >
-                    {connectionStatus}
-                    {connectionStatus === "Reconnecting" && ` (Attempt ${retryCount})`}
-                </span></p>
-                {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
+
+                <div>
+                    <p className="font-medium">Status:
+                        <span
+                            className={
+                                connectionStatus === "Connected" ? "text-green-600 fontbold ml-2" :
+                                    connectionStatus === "Reconnecting" ? "text-yellow-600 fontbold ml-2" :
+                                        "text-red-600 font-bold ml-2"
+                            }
+                        >
+                            {connectionStatus}
+                            {connectionStatus === "Reconnecting" && ` (Attempt ${retryCount})`}
+                        </span>
+                    </p>
+                    {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
+
+                    {/* //Obsolete : the user should login to connect to socket on cookies-based auth */}
+                    {/*                     {useTokenInCookies && (
+                        <div className="mt-2 p-2 bg-gray-200 rounded-sm">
+                            <p className="text-xs font-mono">Cookie Status: {cookieStatus.includes("access_token") ?
+                                <span className="text-green-600 font-bold">✓ access_token found</span> :
+                                <span className="text-red-600 font-bold">✗ access_token not found</span>}
+                            </p>
+                            <p className="text-xs font-mono break-all">{cookieStatus || "No cookies set"}</p>
+                        </div>
+                    )} */}
+                </div>
             </div>
 
-            <div className="flex mb-4">
-                <input
-                    type="text"
-                    value={inputPatientId}
-                    onChange={(e) => setInputPatientId(e.target.value)}
-                    placeholder="Type patient id..."
-                    className="border border-gray-300 p-2 flex-1 rounded-l mr-4"
-                />
-                <button
-                    className="px-4 py-2 bg-blue-500 text-white rounded mb-4 mr-4"
-                    onClick={sendDiagnosisCompleted}
-                    disabled={!socket || connectionStatus !== "Connected"}
-                >
-                    Send diagnosis completed
-                </button>
-                <button
-                    className="px-4 py-2 bg-blue-500 text-white rounded mb-4"
-                    onClick={sendStartDiagnosis}
-                    disabled={!socket || connectionStatus !== "Connected"}
-                >
-                    Send start diagnosis
-                </button>
+
+            {/* Send Events Panel */}
+            <div className="mb-6 bg-gray-100 p-4 rounded shadow-sm">
+                <h2 className="text-lg font-semibold mb-3">Send Events</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Select Event</label>
+                        <select
+                            value={selectedEvent}
+                            onChange={(e) => handleEventChange(e.target.value)}
+                            className="border border-gray-300 p-2 w-full rounded"
+                        >
+                            {AVAILABLE_EVENTS.map(event => (
+                                <option key={event.id} value={event.id}>{event.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex items-end">
+                        <button
+                            className="px-4 py-2 bg-green-500 text-white rounded w-full"
+                            onClick={sendEvent}
+                            disabled={!socket || connectionStatus !== "Connected"}
+                        >
+                            Send Event
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium mb-1">Event Payload (JSON)</label>
+                    <textarea
+                        value={eventPayload}
+                        onChange={(e) => setEventPayload(e.target.value)}
+                        rows={5}
+                        className="border border-gray-300 p-2 w-full rounded font-mono text-sm"
+                    />
+                </div>
             </div>
-            <div className="bg-gray-100 p-3 rounded">
-                <h2 className="font-semibold mb-2">Messages:</h2>
-                {messages.length === 0 ? (
-                    <p className="text-gray-500">No messages received yet</p>
-                ) : (
-                    <ul>
-                        {messages.map((msg, index) => (
-                            <li key={index} className="p-2 border-b">{msg}</li>
-                        ))}
-                    </ul>
-                )}
+
+
+            {/* Event Listeners Panel */}
+            <div className="mb-6 bg-gray-100 p-4 rounded shadow-sm">
+                <h2 className="text-lg font-semibold mb-3">Event Listeners</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {EVENTS_TO_LISTEN.map(eventName => (
+                        <div key={eventName} className="flex items-center">
+                            <input
+                                type="checkbox"
+                                id={`listen-${eventName}`}
+                                checked={listeningEvents.includes(eventName)}
+                                onChange={() => toggleEventListener(eventName)}
+                                className="mr-2"
+                            />
+                            <label htmlFor={`listen-${eventName}`}>{eventName}</label>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Messages Panel */}
+            <div className="bg-gray-100 p-4 rounded shadow-sm">
+                <h2 className="text-lg font-semibold mb-3">Messages</h2>
+                <div className="bg-white border rounded p-3 max-h-80 overflow-y-auto">
+                    {messages.length === 0 ? (
+                        <p className="text-gray-500">No messages received yet</p>
+                    ) : (
+                        <ul>
+                            {messages.map((msg, index) => (
+                                <li key={index} className="p-2 border-b font-mono text-sm break-all">
+                                    {msg}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+                <button
+                    className="mt-2 px-3 py-1 bg-gray-200 text-gray-700 rounded"
+                    onClick={() => setMessages([])}
+                >
+                    Clear Messages
+                </button>
             </div>
         </div>
     );
