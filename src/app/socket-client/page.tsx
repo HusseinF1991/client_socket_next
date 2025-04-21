@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import io, { Socket } from "socket.io-client";
 import { AVAILABLE_EVENTS, EVENTS_TO_LISTEN } from "../socket-events";
-import Cookies from "js-cookie";
 
 // Provide a fallback URL if environment variable is not set
 const SOCKET_SERVER_URL = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || "http://localhost:4000";
@@ -16,7 +15,8 @@ export default function SocketClient() {
     const [retryCount, setRetryCount] = useState<number>(0);
     const [serverUrl, setServerUrl] = useState<string>(SOCKET_SERVER_URL);
 
-    const [cookieStatus, setCookieStatus] = useState<string>("");
+    //Obsolete : the user should login to connect to socket on cookies-based auth
+    // const [cookieStatus, setCookieStatus] = useState<string>("");
 
     // New state for enhancements
     const [token, setToken] = useState<string>("");
@@ -26,29 +26,33 @@ export default function SocketClient() {
     const [listeningEvents, setListeningEvents] = useState<string[]>(EVENTS_TO_LISTEN);
     const [socketPath, setSocketPath] = useState<string>("/socket");
 
-
-    // Function to check if a cookie exists
-    const checkCookieStatus = () => {
-        const cookies = document.cookie;
-        console.log("cookies", cookies);
-        setCookieStatus(cookies);
-        return cookies.includes("access_token");
-    };
-    // Set cookie function
-    const setCookie = () => {
-        // Store JWT token in a cookie with proper settings
-        Cookies.set("access_token", token, {
-            path: "/",
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            expires: 1,
-        });
-        // Also try setting the cookie manually for older browsers
-        document.cookie = `access_token=${token}; path=/; ${process.env.NODE_ENV === "production" ? 'secure;' : ''} samesite=lax; max-age=86400`;
-        // Update cookie status
-        checkCookieStatus();
-        console.log("Cookie set:", document.cookie);
-    };
+    //Obsolete : the user should login to connect to socket on cookies-based auth
+    /*     // Function to check if a cookie exists
+        const checkCookieStatus = () => {
+            const cookies = document.cookie;
+            console.log("cookies", cookies);
+            
+            setCookieStatus(cookies);
+            return cookies.includes("access_token");
+        };
+    
+        // Set cookie function
+        const setCookie = () => {
+            // Store JWT token in a cookie with proper settings
+            Cookies.set("access_token", token, {
+                path: "/",
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                expires: 1,
+            });
+    
+            // Also try setting the cookie manually for older browsers
+            document.cookie = `access_token=${token}; path=/; ${process.env.NODE_ENV === "production" ? 'secure;' : ''} samesite=lax; max-age=86400`;
+            
+            // Update cookie status
+            checkCookieStatus();
+            console.log("Cookie set:", document.cookie);
+        }; */
 
     // Function to establish socket connection
     const connectToSocket = () => {
@@ -62,10 +66,11 @@ export default function SocketClient() {
         setConnectionStatus("Connecting...");
 
 
+        //Obsolete : the user should login to connect to socket on cookies-based auth
         // Configure token based on selected method
-        if (useTokenInCookies) {
-            setCookie();
-        }
+        // if (useTokenInCookies) {
+        //     setCookie();
+        // }
 
         // Socket connection options
         const socketOptions: {
@@ -170,8 +175,9 @@ export default function SocketClient() {
 
     // Initial connection on component mount
     useEffect(() => {
+        //Obsolete : the user should login to connect to socket on cookies-based auth
         // Check for existing cookies
-        checkCookieStatus();
+        // checkCookieStatus();
 
         connectToSocket();
 
@@ -182,11 +188,12 @@ export default function SocketClient() {
         };
     }, []);
 
+    //Obsolete : the user should login to connect to socket on cookies-based auth
     // Update cookie status periodically
-    useEffect(() => {
-        const cookieCheckInterval = setInterval(checkCookieStatus, 2000);
-        return () => clearInterval(cookieCheckInterval);
-    }, []);
+    // useEffect(() => {
+    //     const cookieCheckInterval = setInterval(checkCookieStatus, 2000);
+    //     return () => clearInterval(cookieCheckInterval);
+    // }, []);
 
     // Function to handle sending events
     const sendEvent = () => {
@@ -277,7 +284,7 @@ export default function SocketClient() {
                         placeholder="JWT Token"
                         className="border border-gray-300 p-2 w-full rounded font-mono text-sm"
                         rows={3}
-                        // disabled={useTokenInCookies}
+                        disabled={useTokenInCookies}
                     />
                     <div className="mt-2 flex items-center">
                         <input
@@ -292,7 +299,8 @@ export default function SocketClient() {
                         </label>
                     </div>
 
-                    {useTokenInCookies && (
+                    {/* //Obsolete : the user should login to connect to socket on cookies-based auth */}
+                    {/* {useTokenInCookies && (
                         <button
                             className="mt-2 px-4 py-1 bg-gray-200 text-gray-700 rounded text-sm"
                             onClick={() => {
@@ -304,7 +312,7 @@ export default function SocketClient() {
                         >
                             Force Set Cookie
                         </button>
-                    )}
+                    )} */}
                 </div>
 
                 <div className="mb-2">
@@ -331,15 +339,16 @@ export default function SocketClient() {
                     </p>
                     {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
 
-                    {useTokenInCookies && (
+                    {/* //Obsolete : the user should login to connect to socket on cookies-based auth */}
+                    {/*                     {useTokenInCookies && (
                         <div className="mt-2 p-2 bg-gray-200 rounded-sm">
                             <p className="text-xs font-mono">Cookie Status: {cookieStatus.includes("access_token") ?
                                 <span className="text-green-600 font-bold">✓ access_token found</span> :
                                 <span className="text-red-600 font-bold">✗ access_token not found</span>}
                             </p>
-                            <p className="text-xs font-mono break-all overflow-auto max-h-20">{cookieStatus || "No cookies set"}</p>
+                            <p className="text-xs font-mono break-all">{cookieStatus || "No cookies set"}</p>
                         </div>
-                    )}
+                    )} */}
                 </div>
             </div>
 
