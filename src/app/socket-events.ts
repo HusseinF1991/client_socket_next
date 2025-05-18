@@ -67,7 +67,7 @@ export const AVAILABLE_EVENTS = [
         targetWeight: 75,
         workoutsTypesPref: ["STRENGTH_TRAINING"], // accept null
         injuries: ["SHOULDER_PAIN", "LOWER_BACK_PAIN"], // accept null
-        chronicConditions: null, // accept null
+        chronicConditions: [], // accept null
         targetBodyParts: [
           "CHEST",
           "BACK",
