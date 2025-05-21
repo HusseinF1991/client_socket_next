@@ -55,8 +55,9 @@ export const AVAILABLE_EVENTS = [
     defaultPayload: {
       content:
         "content message eg: create workouts routine based on my profile",
-      messageType: "TEXT | GEN_WORKOUTS_ROUTINE | GEN_NUTRITIONS_ROUTINE",
+      messageType: "TEXT | GEN_WRKTS_ROUT | GEN_NUTR_ROUT",
       Trainee: {
+        //for workouts routine
         trainGoal: "MUSCLE_GAIN",
         fitnessLevel: "INTERMEDIATE",
         equipmentAvailability: "BASIC_HOME",
@@ -65,9 +66,8 @@ export const AVAILABLE_EVENTS = [
         sleepPattern: "CONSISTENT",
         activityLevel: "LIGHT",
         targetWeight: 75,
-        workoutsTypesPref: ["STRENGTH_TRAINING"], // accept null
-        injuries: ["SHOULDER_PAIN", "LOWER_BACK_PAIN"], // accept null
-        chronicConditions: [], // accept null
+        workoutsTypesPref: ["STRENGTH_TRAINING"], // accept empty array
+        injuries: ["SHOULDER_PAIN", "LOWER_BACK_PAIN"], // accept empty array
         targetBodyParts: [
           "CHEST",
           "BACK",
@@ -77,16 +77,23 @@ export const AVAILABLE_EVENTS = [
           "ABDOMEN",
           "HIP",
           "SHOULDER",
-        ], // accept null
+        ], // accept empty array
+        chronicConditions: [], // accept empty array
+        //for nutrition routine
+        mealsFreqAndTimingPref: "STANDARD",
+        mealsFreqAndTimingHabits: "STANDARD",
+        dietaryGoals: ["WEIGHT_LOSS"],
+        dietaryPreferences: [],
+        restrictedFood: ["ALCOHOL", "SWEETS"],
         User: {
           gender: "male",
           age: 33,
-          height: 170
+          height: 170,
         },
         TraineeWeight: {
           id: "sent in case of update only",
           value: 75,
-        }
+        },
       },
     },
   },
