@@ -60,14 +60,14 @@ export const AVAILABLE_EVENTS = [
         //for workouts routine
         trainGoal: "MUSCLE_GAIN",
         fitnessLevel: "INTERMEDIATE",
-        equipmentAvailability: "BASIC_HOME",
+        equipmentAvailability: "EA_BASIC_HOME",
         workoutsDaysPerWeekPref: 3,
-        workoutsSessionDurationPref: "SHORT",
-        sleepPattern: "CONSISTENT",
+        workoutsSessionDurationPref: "WSD_SHORT",
+        sleepPattern: "SP_CONSISTENT",
         activityLevel: "LIGHT",
         targetWeight: 75,
-        workoutsTypesPref: ["STRENGTH_TRAINING"], // accept empty array
-        injuries: ["SHOULDER_PAIN", "LOWER_BACK_PAIN"], // accept empty array
+        workoutsTypesPref: ["WT_STRENGTH_TRAINING"], // accept empty array
+        injuries: ["I_SHOULDER_PAIN", "I_LOWER_BACK_PAIN"], // accept empty array
         targetBodyParts: [
           "CHEST",
           "BACK",
@@ -80,11 +80,11 @@ export const AVAILABLE_EVENTS = [
         ], // accept empty array
         chronicConditions: [], // accept empty array
         //for nutrition routine
-        mealsFreqAndTimingPref: "STANDARD",
-        mealsFreqAndTimingHabits: "STANDARD",
-        dietaryGoals: ["WEIGHT_LOSS"],
+        mealsFreqAndTimingPref: "MS_STANDARD",
+        mealsFreqAndTimingHabits: "MS_STANDARD",
+        dietaryGoals: ["DG_WEIGHT_LOSS"],
         dietaryPreferences: [],
-        restrictedFood: ["ALCOHOL", "SWEETS"],
+        restrictedFood: ["RF_ALCOHOL", "RF_SWEETS"],
         User: {
           gender: "male",
           age: 33,
